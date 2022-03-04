@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, ParamMap } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthService } from 'src/app/auth/auth.service';
 import { language } from '../../../assets/language';
 import { Post } from '../post.model';
 import { PostService } from '../post.service';
@@ -11,7 +13,7 @@ import { mimeType } from './mime-type.validatior';
   templateUrl: './post-create.component.html',
   styleUrls: ['./post-create.component.css'],
 })
-export class PostCreateComponent implements OnInit {
+export class PostCreateComponent implements OnInit, OnDestroy {
   lang = language.eng;
   enteredTitle = '';
   enteredContent = '';
@@ -21,13 +23,21 @@ export class PostCreateComponent implements OnInit {
   public post: Post;
   form: FormGroup;
   imagePreview: string;
+  private authStateSub: Subscription;
 
   constructor(
     private postsService: PostService,
-    public route: ActivatedRoute
+    public route: ActivatedRoute,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
+    this.authStateSub = this.authService
+      .getAuthStatusListener()
+      .subscribe((authStatus) => {
+        this.isLoading = false;
+      });
+
     this.form = new FormGroup({
       title: new FormControl(null, {
         validators: [Validators.required, Validators.minLength(3)],
@@ -51,6 +61,7 @@ export class PostCreateComponent implements OnInit {
             content: postData.content,
             title: postData.title,
             imagePath: postData.imagePath,
+            creator: postData.creator,
           };
           this.isLoading = false;
           this.form.setValue({
@@ -98,5 +109,9 @@ export class PostCreateComponent implements OnInit {
     };
     reader.readAsDataURL(file);
     // this.form.get('image').updateValueAndValidity();
+  }
+
+  ngOnDestroy(): void {
+    this.authStateSub.unsubscribe();
   }
 }

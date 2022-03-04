@@ -14,9 +14,15 @@
         color="primary"
         [routerLink]="['/edit', post.id]"
         routerLinkActive="router-link-active"
+        *ngIf="userIsAuthenticated && userId === post.creator"
         >EDIT</a
       >
-      <button mat-button color="warn" (click)="onDelete(post?.id)">
+      <button
+        mat-button
+        color="warn"
+        (click)="onDelete(post?.id)"
+        *ngIf="userIsAuthenticated && userId === post.creator"
+      >
         DELETE
       </button>
     </mat-action-row>

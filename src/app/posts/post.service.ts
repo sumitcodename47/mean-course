@@ -5,6 +5,9 @@ import { HttpClient } from '@angular/common/http';
 
 import { Post } from './post.model';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
+
+const BACKEND_URL = environment.apiUrl + '/posts';
 
 @Injectable({ providedIn: 'root' })
 export class PostService {
@@ -18,7 +21,7 @@ export class PostService {
 
     this.http
       .get<{ message: string; posts: any; maxPosts: number }>(
-        'http://localhost:3000/api/posts' + queryParams
+        BACKEND_URL + queryParams
       )
       .pipe(
         map((postData: any) => {
@@ -29,6 +32,7 @@ export class PostService {
                 content: post.content,
                 id: post._id,
                 imagePath: post.imagePath,
+                creator: post.creator,
               };
             }),
             maxPosts: postData.maxPosts,
@@ -36,6 +40,7 @@ export class PostService {
         })
       )
       .subscribe((transFormedPosts) => {
+        console.log(transFormedPosts);
         this.posts = transFormedPosts.posts;
         this.postUpdated.next({
           posts: [...this.posts],
@@ -50,17 +55,14 @@ export class PostService {
     postData.append('content', content);
     postData.append('image', image, title);
     this.http
-      .post<{ message: string; post: Post }>(
-        'http://localhost:3000/api/posts',
-        postData
-      )
+      .post<{ message: string; post: Post }>(BACKEND_URL, postData)
       .subscribe((responseData) => {
         this.router.navigate(['/']);
       });
   }
 
   deletePost(id: any) {
-    return this.http.delete('http://localhost:3000/api/posts/' + id);
+    return this.http.delete(BACKEND_URL + '/' + id);
   }
 
   getPostUpdateListner() {
@@ -73,7 +75,8 @@ export class PostService {
       content: string;
       title: string;
       imagePath: string;
-    }>('http://localhost:3000/api/posts/' + id);
+      creator: string;
+    }>(BACKEND_URL + '/' + id);
   }
 
   updatePost(id: string, title: string, content: string, image: File | string) {
@@ -90,12 +93,11 @@ export class PostService {
         content,
         title,
         imagePath: image,
+        creator: null,
       };
     }
-    this.http
-      .put('http://localhost:3000/api/posts/' + id, postData)
-      .subscribe((response) => {
-        this.router.navigate(['/']);
-      });
+    this.http.put(BACKEND_URL + '/' + id, postData).subscribe((response) => {
+      this.router.navigate(['/']);
+    });
   }
 }
